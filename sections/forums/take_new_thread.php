@@ -90,31 +90,28 @@ $DB->query("
 		LastPostTime     = '".sqltime()."'
 	WHERE ID = '$TopicID'");
 
-if (isset($_POST['subscribe'])) {
+// Do a bulk insert into the users_subscriptions table for all users
+// subscribed to this forum
+$Subscribers = get_subscriptions_for_forum($ForumID);
+if (count($Subscribers) > 0) {
+	$SubscribersValueString = '(';
+	$SubscribersValueString .= implode(", $TopicID), (", $Subscribers);
+	$SubscribersValueString .= ", $TopicID)";
+	$DB->query("INSERT INTO users_subscriptions (UserID, TopicID) VALUES $SubscribersValueString");
+}
+
+// Loop through all the users that got subscribed to the thread and
+// update the cache entries
+foreach($Subscribers as $Subscriber) {
+	add_topic_subscription_for_user($Subscriber, $TopicID);
+}
+
+if (isset($_POST['subscribe']) && !in_array($LoggedUser['ID'], $Subscribers)) {
 	$DB->query("
 		INSERT INTO users_subscriptions
 		VALUES ($LoggedUser[ID], $TopicID)");
-	$Cache->delete_value('subscriptions_user_'.$LoggedUser['ID']);
+	add_topic_subscription_for_user($LoggedUser['ID'], $TopicID);
 }
-
-//auto subscribe
-/*
-if (check_perms('users_mod')) {
-	$DB->query("
-		SELECT SubscriberID
-		FROM subscribed_forums
-		WHERE ForumID = '$ForumID'
-			AND SubscriberID != '$LoggedUser[ID]'");
-	while (list($SubscriberID) = $DB->next_record()) {
-		$DB->query("INSERT INTO users_subscriptions VALUES ($SubscriberID, $TopicID)");
-		//	$DB->query("INSERT INTO forums_last_read_topics
-			//						(UserID, TopicID, PostID) VALUES
-				//							('$SubscriberID', '".$TopicID ."', '".db_string($PostID)."')
-					//							ON DUPLICATE KEY UPDATE PostID='$LastPost'");
-		$Cache->delete_value('subscriptions_user_'.$SubscriberID);
-	}
-}
-*/
 
 if (empty($_POST['question']) || empty($_POST['answers']) || !check_perms('forums_polls_create')) {
 	$NoPoll = 1;
