@@ -108,8 +108,8 @@ if (!empty($_POST['action'])) {
 		case 'warn':
 			require(SERVER_ROOT.'/sections/forums/warn.php');
 			break;
-		case 'forum_subscribe':
-			include('subscribe.php');
+		case 'forum_subscription':
+			include('subscription.php');
 			break;
 		default:
 			error(404);

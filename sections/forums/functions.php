@@ -23,7 +23,7 @@ function get_thread_info($ThreadID, $Return = true, $SelectiveCache = false, $Ap
 			if (!$ApiCall) {
 				error(404);
 			} else {
-				return NULL;
+				return null;
 			}
 		}
 		$ThreadInfo = $DB->next_record(MYSQLI_ASSOC, false);
@@ -138,4 +138,101 @@ function get_forums() {
 	$Cache->cache_value('forums_list', $Forums, 0); //Inf cache.
 	}
 	return $Forums;
+}
+
+/**
+ * Add a forum subscription for the provided user id
+ *
+ * @param $UserID
+ * @param $ForumID
+ */
+function add_subscribed_forum($UserID, $ForumID) {
+	global $DB;
+
+	$UserID = (int)$DB->escape_str($UserID);
+	$Subscriptions = get_subscribed_forums($UserID);
+	if (!in_array($ForumID, $Subscriptions)) {
+		$Subscriptions[] = $ForumID;
+		$DB->query("INSERT INTO users_subscribed_forums (UserID, ForumID) VALUES ({$UserID}, $ForumID)");
+		cache_forum_subscriptions($UserID, $Subscriptions);
+	}
+}
+
+/**
+ * Get a list of forum subscriptions for the given user id
+ *
+ * @param $UserID
+ *
+ * @return array|int List of forum ids the user has subscribed to
+ */
+function get_subscribed_forums($UserID) {
+	global $Cache, $DB;
+
+	if (!$Subscriptions = $Cache->get_value("forum_subscriptions_{$UserID}")) {
+
+		$UserID = (int)$DB->escape_str($UserID);
+		$DB->query("SELECT * FROM users_subscribed_forums WHERE UserID = $UserID");
+		$ResultSet = $DB->to_array();
+
+		$Subscriptions = array();
+		foreach ($ResultSet as $Subscription) {
+			$Subscriptions[] = $Subscription['ForumID'];
+		}
+
+		cache_forum_subscriptions($UserID, $Subscriptions);
+
+	} else {
+		$Subscriptions = unserialize($Subscriptions);
+	}
+
+	return $Subscriptions;
+}
+
+/**
+ * Remove a forum subscription from the specified user id
+ *
+ * @param $UserID
+ * @param $ForumID
+ */
+function remove_subscribed_forum($UserID, $ForumID) {
+	global $DB;
+
+	$UserID = (int)$DB->escape_str($UserID);
+	$Subscriptions = get_subscribed_forums($UserID);
+	if (($key = array_search($ForumID, $Subscriptions)) !== false) {
+		$DB->query("DELETE FROM users_subscribed_forums WHERE ForumID = $ForumID AND UserID = {$UserID}");
+		unset($Subscriptions[$key]);
+		cache_forum_subscriptions($UserID, $Subscriptions);
+	}
+
+}
+
+/**
+ * Wrapper method to pull the global requirement on $Cache out of above methods which should
+ * enable simpler unit testing
+ *
+ * @param $UserID
+ * @param $Subscriptions
+ */
+function cache_forum_subscriptions($UserID, $Subscriptions) {
+	global $Cache;
+
+	$Cache->set("forum_subscriptions_{$UserID}", serialize($Subscriptions));
+}
+
+/**
+ * Returns true if the user is subscribed to the given forum id; otherwise false
+ *
+ * @param $UserID
+ * @param $ForumID
+ *
+ * @return bool
+ */
+function check_user_forum_subscription($UserID, $ForumID) {
+	$Subscriptions = get_subscribed_forums($UserID);
+	if (in_array($ForumID, $Subscriptions)) {
+		return true;
+	} else {
+		return false;
+	}
 }

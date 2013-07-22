@@ -85,6 +85,11 @@ View::show_header('Forums &gt; '. $Forums[$ForumID]['Name']);
 <? if (check_forumperm($ForumID, 'Write') && check_forumperm($ForumID, 'Create')) { ?>
 		<a href="forums.php?action=new&amp;forumid=<?=$ForumID?>" class="brackets">New thread</a>
 <? } ?>
+<? if (!check_user_forum_subscription($UserID, $ForumID)) { ?>
+		<a href="forums.php?action=forum_subscription&amp;do=subscribe&amp;forumid=<?= $ForumID ?>" class="brackets" title="Automatically subscribe to new threads in this forum">Subscribe</a>
+<? } else { ?>
+		<a href="forums.php?action=forum_subscription&amp;do=unsubscribe&amp;forumid=<?= $ForumID ?>" class="brackets" title="Unsubscribe from new threads in this forum">Unsubscribe</a>
+<? } ?>
 		<a href="#" onclick="$('#searchforum').gtoggle(); this.innerHTML = (this.innerHTML == 'Search this forum' ? 'Hide search' : 'Search this forum'); return false;" class="brackets">Search this forum</a>
 		<div id="searchforum" class="hidden center">
 			<div style="display: inline-block;">
