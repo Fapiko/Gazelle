@@ -964,12 +964,6 @@ CREATE TABLE `stylesheets` (
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
-CREATE TABLE `subscribed_forums` (
-  `ForumID` int(10) NOT NULL,
-  `UserID` int(10) NOT NULL,
-  PRIMARY KEY (`ForumID`,`UserID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
 CREATE TABLE `subscribed_users` (
   `UserID` int(10) NOT NULL,
   `SubscriberID` int(10) NOT NULL,
@@ -1618,6 +1612,12 @@ CREATE TABLE `users_sessions` (
   KEY `Active` (`Active`),
   KEY `ActiveAgeKeep` (`Active`,`LastUpdate`,`KeepLogged`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `users_subscribed_forums` (
+  `UserID` int(10) NOT NULL,
+  `ForumID` int(10) NOT NULL,
+  PRIMARY KEY (`UserID`,`ForumID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 CREATE TABLE `users_subscriptions` (
   `UserID` int(10) NOT NULL,
